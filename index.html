@@ -8,10 +8,10 @@
         :root {
             --bg-color: #f4f6f9;
             --card-bg: #ffffff;
-            --main-blue: #0066b3; /* Насыщенный синий цвет со скриншота */
+            --main-blue: #0066b3; 
             --text-dark: #000000;
             --text-blue: #0066b3;
-            --rs-red: #d32f2f;   /* Красный цвет для выделения визита РС */
+            --rs-red: #d32f2f;   
         }
 
         * {
@@ -29,7 +29,7 @@
 
         /* Панель управления */
         .controls {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto 20px auto;
             display: flex;
             justify-content: flex-end;
@@ -64,20 +64,16 @@
             color: #fff;
         }
 
-        .hidden-element {
-            display: none !important;
-        }
-
-        /* Общая обертка для А4 */
+        /* Общая обертка */
         .page-wrapper {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             background: #fff;
-            padding: 20px 30px;
+            padding: 25px 30px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        /* Главные неизменяемые заголовки */
+        /* Шапка */
         .main-header {
             text-align: center;
             margin-bottom: 25px;
@@ -115,7 +111,7 @@
             grid-template-columns: repeat(4, 1fr);
         }
 
-        /* Дизайн карточки со скриншота */
+        /* Карточка */
         .week-card {
             background: var(--card-bg);
             border: 2px solid var(--main-blue);
@@ -128,68 +124,73 @@
         .week-header-block {
             text-align: center;
             border-bottom: 1px solid var(--main-blue);
-            padding: 6px;
+            padding: 8px;
             font-size: 12pt;
             font-weight: bold;
         }
 
         .card-body {
-            padding: 10px 14px;
+            padding: 12px 16px;
             display: flex;
             flex-direction: column;
             height: 100%;
         }
 
-        /* Строки пунктов программы */
+        /* Строки с прижатием ФИО к правой стенке */
         .item-row {
             display: flex;
-            margin-bottom: 5px;
+            justify-content: space-between; 
+            align-items: baseline;
+            margin-bottom: 6px;
             font-size: 11pt;
             line-height: 1.3;
         }
 
         .item-label {
             font-style: italic;
-            width: 110px;
-            flex-shrink: 0;
-            text-align: right;
-            padding-right: 8px;
+            color: var(--text-dark);
+            text-align: left;
+            padding-right: 10px;
+            white-space: nowrap;
         }
 
         .item-value {
             font-weight: bold;
             color: var(--text-blue);
+            text-align: right; 
         }
 
-        /* Специфическая строка "Речь:" */
+        /* Строка "Речь:" / "Закл. речь:" */
         .speech-row {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: baseline;
             margin: 4px 0;
             font-size: 11pt;
         }
         .speech-row .label-bold {
             font-weight: bold;
-            padding-right: 6px;
+            text-align: left;
         }
         .speech-row .value-bold {
             font-weight: bold;
             color: var(--text-blue);
+            text-align: right;
         }
 
-        /* Название речи большими буквами по центру */
+        /* Название речи */
         .speech-topic {
             text-align: center;
             font-weight: bold;
             color: var(--text-blue);
-            font-size: 12pt;
-            margin: 12px 0;
+            font-size: 11pt;
+            margin: 10px 0;
             padding: 0 5px;
             text-transform: uppercase;
             line-height: 1.3;
         }
 
-        /* Маленький заголовок Сторожевой Башни */
+        /* Заголовок Сторожевой Башни */
         .sb-heading {
             font-weight: bold;
             font-size: 11pt;
@@ -200,12 +201,12 @@
             padding-top: 6px;
         }
 
-        /* Визиты Районного Старейшины (Красная тема) */
+        /* Визиты РС (Красная тема) */
         .week-card.type-rs {
             border: 2px solid var(--rs-red);
         }
         .week-card.type-rs .week-header-block {
-            border-bottom: 2px solid var(--rs-red);
+            border-bottom: 1px solid var(--rs-red);
         }
         .week-card.type-rs .item-value,
         .week-card.type-rs .speech-row .value-bold,
@@ -213,7 +214,7 @@
             color: var(--rs-red);
         }
         .week-card.type-rs .sb-heading {
-            border-top: 2px solid var(--rs-red);
+            border-top: 1px solid var(--rs-red);
         }
 
         /* Конгрессы */
@@ -229,7 +230,7 @@
             padding: 20px;
         }
         .week-card.type-congress .congress-text {
-            font-size: 14pt;
+            font-size: 13pt;
             font-weight: bold;
             color: var(--text-dark);
             text-align: center;
@@ -251,18 +252,32 @@
                 padding: 0 !important;
                 max-width: 100% !important;
             }
-            .schedule-container {
+            .week-card {
+                page-break-inside: avoid;
+            }
+
+            /* Динамическое управление ориентацией страницы при печати */
+            body.print-2x2 {
+                @page { size: portrait; margin: 10mm; }
+            }
+            body.print-2x2 .schedule-container {
                 display: grid !important;
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 15px !important;
             }
-            .week-card {
-                page-break-inside: avoid;
+
+            body.print-4x1 {
+                @page { size: landscape; margin: 10mm; }
+            }
+            body.print-4x1 .schedule-container {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 10px !important;
             }
         }
     </style>
 </head>
-<body>
+<body class="print-2x2" id="bodyElement">
 
     <div class="controls">
         <div class="btn-group">
@@ -272,18 +287,16 @@
     </div>
 
     <div class="page-wrapper">
-        <!-- Шапка листа -->
         <div class="main-header">
-            <div class="global-day-time" id="globalDayTime">(Воскресенье <span id="globalTime">16<span class="time-super">00</span></span>)</div>
+            <div class="global-day-time" id="globalDayTime">(Воскресенье 16<span class="time-super">00</span>)</div>
             <div class="global-title">Публичная встреча и Изучение Сторожевой башни</div>
         </div>
 
-        <!-- Контейнер с четырьмя неделями -->
         <div class="schedule-container view-2x2" id="scheduleContainer"></div>
     </div>
 
     <script>
-        // Данные сопоставлены с индексами ячеек твоего файла week_grafik.xlsx
+        // Исходный массив строк из твоего файлаweek_grafik.xlsx
         const mockSheetsData = {
             "B": ["Параметр", "Неделя 1", "Обычная", "2026-08-02", "Воскресенье", "Братченко О.", "147", "Беля Ю.", "Криворучко В.", "КАК УЗНАТЬ, ЧТО ПРИНЕСЕТ НАМ БУДУЩЕЕ?", "Гнатюк С.", "Беля Ю.", "Криворучко В.", "", "", "", "", "", "", "", "", "", "", "", ""],
             "D": ["Параметр", "Неделя 2", "Обычная", "2026-08-09", "Воскресенье", "Пелех М.", "151", "Кучеренко А.", "Кивенко Д.", "ВОСКРЕСЕНИЕ — ПОБЕДА НАД СМЕРТЬЮ!", "Гнатюк С.", "Криворучко В.", "Кивенко Д.", "", "", "", "", "", "", "", "", "", "", "", ""],
@@ -295,28 +308,24 @@
         const container = document.getElementById('scheduleContainer');
         const toggleBtn = document.getElementById('toggleGridBtn');
         const printBtn = document.getElementById('printBtn');
+        const bodyElement = document.getElementById('bodyElement');
 
-        // Преобразование даты в формат: "воскресенье, 2 августа 2026 г."
         function formatCardDate(dateStr, dayStr) {
             if(!dateStr) return '';
             const date = new Date(dateStr);
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
             let formatted = date.toLocaleDateString('ru-RU', options);
-            // Добавляем точку к "г", если её нет
             if(!formatted.endsWith('.')) formatted += ' г.';
-            return `${dayStr.toLowerCase()}, ${formatted}`;
+            return `${dayStr.toLowerCase(), formatted}`;
         }
 
-        // Обновление глобального заголовка (День недели и Время из первой доступной колонки B)
         function updateGlobalHeader(data) {
             const firstWeek = data["B"];
             if (firstWeek) {
                 const dayName = firstWeek[4] || "Воскресенье";
-                // Предполагаем время 16:00, превращаем в красивый формат 16⁰⁰
                 const timeStr = "16:00"; 
                 const hour = timeStr.split(':')[0] || '16';
                 const min = timeStr.split(':')[1] || '00';
-                
                 document.getElementById('globalDayTime').innerHTML = `(${dayName} ${hour}<span class="time-super">${min}</span>)`;
             }
         }
@@ -336,7 +345,6 @@
                 const card = document.createElement('div');
                 card.className = 'week-card';
 
-                // Хедер карточки с датой
                 const headerBlock = document.createElement('div');
                 headerBlock.className = 'week-header-block';
                 headerBlock.textContent = formatCardDate(dateRaw, dayName);
@@ -355,20 +363,20 @@
                 else if (type === "Визит РС") {
                     card.classList.add('type-rs');
                     
-                    // Строгая структура визита РС по Твоему указанию и скриншоту
+                    // ИСПРАВЛЕНО: Индексы строк для Визита РС приведены в точное соответствие
                     bodyBlock.innerHTML = `
                         <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[14] || ''}</div></div>
                         <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[15] || ''}</div></div>
                         <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[16] || ''}</div></div>
                         
                         <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${row[17] || ''}</span></div>
-                        <div class="speech-topic">${row[18] || ''}</div>
+                        <div class="speech-topic">«${row[18] || ''}»</div>
                         
                         <div class="sb-heading">Сторожевая Башня</div>
                         <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${row[19] || ''}</div></div>
                         
                         <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${row[20] || ''}</span></div>
-                        <div class="speech-topic">${row[21] || ''}</div>
+                        <div class="speech-topic">«${row[21] || ''}»</div>
                         
                         <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[22] || ''}</div></div>
                         <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[23] || ''}</div></div>
@@ -383,7 +391,7 @@
                         <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[7] || ''}</div></div>
                         
                         <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${row[8] || ''}</span></div>
-                        <div class="speech-topic">${row[9] || ''}</div>
+                        <div class="speech-topic">«${row[9] || ''}»</div>
                         
                         <div class="sb-heading">Сторожевая Башня</div>
                         <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${row[10] || ''}</div></div>
@@ -397,18 +405,20 @@
             });
         }
 
-        // Логика переключения сеток и скрытия печати
+        // Логика переключения сеток и настройки печати
         toggleBtn.addEventListener('click', () => {
             if (container.classList.contains('view-2x2')) {
                 container.classList.remove('view-2x2');
                 container.classList.add('view-4x1');
+                bodyElement.classList.remove('print-2x2');
+                bodyElement.classList.add('print-4x1'); // Переключаем печать в альбомный режим
                 toggleBtn.textContent = '📱 Вид: Сетка 2х2';
-                printBtn.classList.add('hidden-element');
             } else {
                 container.classList.remove('view-4x1');
                 container.classList.add('view-2x2');
+                bodyElement.classList.remove('print-4x1');
+                bodyElement.classList.add('print-2x2'); // Возвращаем печать в портретный режим
                 toggleBtn.textContent = '📱 Вид: Ряд 4х1';
-                printBtn.classList.remove('hidden-element');
             }
         });
 
