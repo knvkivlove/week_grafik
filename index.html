@@ -144,6 +144,7 @@
             padding: 10px;
             font-size: 12pt;
             font-weight: bold;
+            color: #000;
         }
 
         .card-body {
@@ -285,25 +286,34 @@
     </div>
 
     <script>
-        // ==========================================
-        // НАСТРОЙКА ТАБЛИЦЫ
-        // ==========================================
         const SPREADSHEET_ID = "1zKuNfeFfe3SwHuXriJJYnB7mN76cnFyhgcrZpoua05E"; 
         const SHEET_NAME = "График";
         
-        // Запрашиваем ровный диапазон ячеек A1:H30
-        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:H30`;
+        // Запрашиваем с запасом ячейки A1:H40
+        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:H40`;
 
         const container = document.getElementById('scheduleContainer');
         const toggleBtn = document.getElementById('toggleGridBtn');
         const printBtn = document.getElementById('printBtn');
         const bodyElement = document.getElementById('bodyElement');
 
-        // Обработка текстовой даты (сохраняет ДД.ММ.ГГГГ или разбирает дефисы)
         function formatCardDate(dateStr, dayStr) {
             if(!dateStr) return '';
             let cleanStr = dateStr.toString().trim();
             
+            // Если дата пришла в формате ISO (ГГГГ-ММ-ДД)
+            if (cleanStr.includes('-')) {
+                const parts = cleanStr.split('-');
+                if (parts.length === 3) {
+                    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                    if (!isNaN(dateObj.getTime())) {
+                        let formatted = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                        if(!formatted.endsWith('.')) formatted += ' г.';
+                        return `${dayStr.toLowerCase()}, ${formatted}`;
+                    }
+                }
+            }
+            // Если дата в формате ДД.ММ.ГГГГ
             if (cleanStr.includes('.')) {
                 const parts = cleanStr.split('.');
                 if (parts.length === 3) {
@@ -311,17 +321,6 @@
                     const monthIdx = parseInt(parts[1], 10) - 1;
                     const year = parseInt(parts[2], 10);
                     const dateObj = new Date(year, monthIdx, day);
-                    if (!isNaN(dateObj.getTime())) {
-                        let formatted = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-                        if(!formatted.endsWith('.')) formatted += ' г.';
-                        return `${dayStr.toLowerCase()}, ${formatted}`;
-                    }
-                }
-            } else if (cleanStr.includes('-')) {
-                // Если пришло в формате ГГГГ-ММ-ДД
-                const parts = cleanStr.split('-');
-                if (parts.length === 3) {
-                    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
                     if (!isNaN(dateObj.getTime())) {
                         let formatted = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
                         if(!formatted.endsWith('.')) formatted += ' г.';
@@ -337,41 +336,50 @@
             const json = JSON.parse(rawJson);
             const rows = json.table.rows;
 
-            // Готовим 4 пустых массива, куда строго по порядку сверху вниз сложим ячейки
-            const data = { "B": [], "D": [], "F": [], "H": [] };
-            const colsMapping = { 1: "B", 3: "D", 5: "F", 7: "H" };
+            // Нам обязательно нужна колонка А для понимания структуры (маркеров)
+            const parsedData = {
+                "A": [], "B": [], "D": [], "F": [], "H": []
+            };
+            const colsMapping = { 0: "A", 1: "B", 3: "D", 5: "F", 7: "H" };
 
-            // Перебираем строки таблицы сверху вниз
             for (let r = 0; r < rows.length; r++) {
                 const cells = rows[r] ? rows[r].c : null;
+                if(!cells) continue;
                 
-                [1, 3, 5, 7].forEach(colIdx => {
-                    const cellObj = cells ? cells[colIdx] : null;
+                [0, 1, 3, 5, 7].forEach(colIdx => {
+                    const cellObj = cells[colIdx];
                     let val = (cellObj && cellObj.v !== null) ? (cellObj.f || cellObj.v) : "";
-                    data[colsMapping[colIdx]].push(val.toString().trim());
+                    parsedData[colsMapping[colIdx]].push(val.toString().trim());
                 });
             }
-            return data;
+            return parsedData;
         }
 
         function renderSchedule(data) {
             container.innerHTML = '';
             const columns = ["B", "D", "F", "H"];
-            
-            // Глобальная шапка: День недели берем из 5-й строки Excel (индекс массива 4)
-            if (data["B"] && data["B"][4]) {
-                document.getElementById('globalDayTime').innerHTML = `(${data["B"][4]} 16<span class="time-super">00</span>)`;
+            const labels = data["A"]; // Ориентируемся на реальные надписи из колонки А
+
+            // Ищем базовые индексы динамически по колонке А
+            const typeIdx = labels.findIndex(l => l.toLowerCase().includes("типнедели"));
+            const dateIdx = labels.findIndex(l => l.toLowerCase().includes("дата"));
+            const dayIdx  = labels.findIndex(l => l.toLowerCase().includes("день"));
+            const rsSeparatorIdx = labels.findIndex(l => l.toLowerCase().includes("посещение районного"));
+
+            // Глобальный день недели в шапке страницы
+            if (data["B"] && dayIdx !== -1) {
+                document.getElementById('globalDayTime').innerHTML = `(${data["B"][dayIdx]} 16<span class="time-super">00</span>)`;
             }
-            
+
             columns.forEach(col => {
                 const arr = data[col];
-                if (!arr || arr.length < 10) return;
+                if (!arr || arr.length === 0) return;
 
-                // Задаем смещение: индексы JS = НомерСтрокиExcel - 1
-                const type = arr[2];     // 3 строка Excel = индекс 2 (ТипНедели)
-                const dateRaw = arr[3];  // 4 строка Excel = индекс 3 (ДАТА)
-                const dayName = arr[4];  // 5 строка Excel = индекс 4 (ДЕНЬ)
-                
+                // Извлекаем тип, дату и день по динамическим индексам
+                const type = typeIdx !== -1 ? arr[typeIdx] : "Обычная";
+                const dateRaw = dateIdx !== -1 ? arr[dateIdx] : "";
+                const dayName = dayIdx !== -1 ? arr[dayIdx] : "Воскресенье";
+
                 const card = document.createElement('div');
                 card.className = 'week-card';
 
@@ -385,46 +393,61 @@
 
                 if (type === "Конгресс") {
                     card.classList.add('type-congress');
-                    const congText = arr[24] || "РЕГИОНАЛЬНЫЙ КОНГРЕСС"; // 25 строка Excel = индекс 24
+                    // Текст конгресса ищем на строке, где в колонке А написано "Региональный конгресс" или "Конгресс"
+                    const cTextIdx = labels.findIndex((l, i) => i > dayIdx && l.toLowerCase().includes("конгрес"));
+                    const congText = cTextIdx !== -1 ? arr[cTextIdx] : "РЕГИОНАЛЬНЫЙ КОНГРЕСС";
+                    
                     bodyBlock.className = 'congress-content-wrapper';
                     bodyBlock.innerHTML = `<div class="congress-text">${congText}</div>`;
                 } 
                 else if (type === "Визит РС") {
                     card.classList.add('type-rs');
                     
-                    // Блок Визита РС: Строки Excel 15-24 (индексы JS 14-23)
+                    // Для Визита РС ищем индексы строго ПОСЛЕ разделителя "Посещение районного"
+                    const startFind = rsSeparatorIdx !== -1 ? rsSeparatorIdx : 12;
+                    
+                    const getRSIndex = (labelName) => {
+                        return labels.findIndex((l, idx) => idx > startFind && l.toLowerCase().replace(/\s+/g, '') === labelName.toLowerCase().replace(/\s+/g, ''));
+                    };
+
                     bodyBlock.innerHTML = `
-                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${arr[14] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${arr[15] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[16] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${arr[getRSIndex("Председатель")] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${arr[getRSIndex("Песня№")] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getRSIndex("Молитва")] || arr[getRSIndex("Молитва1")] || ''}</div></div>
                         
-                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${arr[17] || ''}</span></div>
-                        <div class="speech-topic">«${arr[18] || ''}»</div>
+                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${arr[getRSIndex("Докладчик1")] || arr[getRSIndex("Докладчик")] || ''}</span></div>
+                        <div class="speech-topic">«${arr[getRSIndex("НазваниеРечи1")] || arr[getRSIndex("НазваниеРечи")] || ''}»</div>
                         
                         <div class="sb-heading">Сторожевая Башня</div>
-                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${arr[19] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${arr[getRSIndex("ВедущийСТ")] || ''}</div></div>
                         
-                        <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${arr[20] || ''}</span></div>
-                        <div class="speech-topic">«${arr[21] || ''}»</div>
+                        <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${arr[getRSIndex("Докладчик2")] || ''}</span></div>
+                        <div class="speech-topic">«${arr[getRSIndex("НазваниеРечи2")] || ''}»</div>
                         
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[22] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">ВПС:</div><div class="item-value">${arr[23] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getRSIndex("Молитва2")] || arr[labels.findIndex((l, i) => i > getRSIndex("НазваниеРечи2") && l.toLowerCase().includes("молитва"))] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">ВПС:</div><div class="item-value">${arr[getRSIndex("ВПС")] || ''}</div></div>
                     `;
                 } 
                 else {
-                    // Блок Обычной недели: Строки Excel 6-13 (индексы JS 5-12)
+                    // Обычная неделя — ищем индексы строго ДО разделителя РС
+                    const endFind = rsSeparatorIdx !== -1 ? rsSeparatorIdx : 14;
+                    
+                    const getNormalIndex = (labelName) => {
+                        return labels.findIndex((l, idx) => idx < endFind && l.toLowerCase().replace(/\s+/g, '') === labelName.toLowerCase().replace(/\s+/g, ''));
+                    };
+
                     bodyBlock.innerHTML = `
-                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${arr[5] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${arr[6] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[7] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${arr[getNormalIndex("Председатель")] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${arr[getNormalIndex("Песня№")] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getNormalIndex("Молитва1")] || ''}</div></div>
                         
-                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${arr[8] || ''}</span></div>
-                        <div class="speech-topic">«${arr[9] || ''}»</div>
+                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${arr[getNormalIndex("Докладчик")] || ''}</span></div>
+                        <div class="speech-topic">«${arr[getNormalIndex("НазваниеРечи")] || ''}»</div>
                         
                         <div class="sb-heading">Сторожевая Башня</div>
-                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${arr[10] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Чтец:</div><div class="item-value">${arr[11] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[12] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${getNormalIndex("ВедущийСТ") !== -1 ? arr[getNormalIndex("ВедущийСТ")] : ''}</div></div>
+                        <div class="item-row"><div class="item-label">Чтец:</div><div class="item-value">${getNormalIndex("ЧтецСТ") !== -1 ? arr[getNormalIndex("ЧтецСТ")] : ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getNormalIndex("Молитва2")] || ''}</div></div>
                     `;
                 }
 
@@ -433,7 +456,6 @@
             });
         }
 
-        // Запуск fetch
         fetch(JSON_URL)
             .then(response => response.text())
             .then(dataText => {
@@ -449,7 +471,6 @@
                 document.getElementById('loadingMessage').innerHTML = "❌ Ошибка загрузки данных таблицы. Проверь ID и доступы. <br><small>" + error + "</small>";
             });
 
-        // Кнопки управления видами
         toggleBtn.addEventListener('click', () => {
             if (container.classList.contains('view-2x2')) {
                 container.classList.remove('view-2x2');
