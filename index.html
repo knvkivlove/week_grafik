@@ -29,7 +29,6 @@
             padding: 20px;
         }
 
-        /* Индикатор загрузки */
         .loader {
             text-align: center;
             font-size: 14pt;
@@ -38,11 +37,10 @@
             margin-top: 50px;
         }
 
-        /* Панель управления */
         .controls {
             max-width: 820px;
             margin: 0 auto 20px auto;
-            display: none; /* Появится после загрузки */
+            display: none; 
             justify-content: flex-end;
             background: #fff;
             padding: 10px 20px;
@@ -80,7 +78,6 @@
             color: #fff;
         }
 
-        /* Контейнер листа А4 */
         .page-wrapper {
             max-width: 820px; 
             margin: 0 auto;
@@ -88,7 +85,7 @@
             padding: 30px 40px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             transition: max-width 0.3s ease;
-            display: none; /* Появится после загрузки */
+            display: none; 
         }
 
         body.view-mode-4x1 .page-wrapper {
@@ -118,7 +115,6 @@
             color: var(--main-blue);
         }
 
-        /* Сетка карточек */
         .schedule-container {
             display: grid;
             gap: 20px;
@@ -132,7 +128,6 @@
             grid-template-columns: repeat(4, 1fr);
         }
 
-        /* Карточка */
         .week-card {
             background: var(--card-bg);
             border: 2px solid var(--main-blue);
@@ -219,7 +214,6 @@
             padding-top: 6px;
         }
 
-        /* Стиль для Визита РС */
         .week-card.type-rs {
             border: 2px solid var(--rs-red);
         }
@@ -236,7 +230,6 @@
             border-top: 1px solid var(--rs-red);
         }
 
-        /* Стиль для Конгресса */
         .week-card.type-congress {
             justify-content: flex-start;
             min-height: 320px;
@@ -291,13 +284,13 @@
 
     <script>
         // ==========================================
-        // НАСТРОЙКА ТАБЛИЦЫ (ПРОПИШИ СВОЙ ID ЗДЕСЬ)
+        // НАСТРОЙКА ТАБЛИЦЫ
         // ==========================================
-        const SPREADSHEET_ID = "1zKuNfeFfe3SwHuXriJJYnB7mN76cnFyhgcrZpoua05E";
+        const SPREADSHEET_ID = "1zKuNfeFfe3SwHuXriJJYnB7mN76cnFyhgcrZpoua05E"; // Сюда подставь актуальный ID
         const SHEET_NAME = "График";
         
-        // Ссылка на JSON-экспорт диапазона ячеек (A1:H25)
-        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:H25`;
+        // Запрашиваем весь лист A1:H50, чтобы точно захватить параметры и ключи
+        const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:H50`;
 
         const container = document.getElementById('scheduleContainer');
         const toggleBtn = document.getElementById('toggleGridBtn');
@@ -306,14 +299,11 @@
 
         function formatCardDate(dateStr, dayStr) {
             if(!dateStr) return '';
-            
-            // Если дата пришла в формате "Date(2026,7,5)" из Google API
             if(dateStr.toString().includes('Date')) {
                 const matches = dateStr.match(/\d+/g);
                 if(matches && matches.length >= 3) {
-                    // В JS месяцы идут с 0, а в Google API они уже скорректированы или передаются как есть
                     const year = matches[0];
-                    const month = parseInt(matches[1]) + 1; // Корректировка отображения при необходимости
+                    const month = parseInt(matches[1]) + 1; 
                     const day = matches[2];
                     const date = new Date(`${year}-${month}-${day}`);
                     if(!isNaN(date.getTime())) {
@@ -323,40 +313,44 @@
                     }
                 }
             }
-
-            // Обычная текстовая строка даты
             const date = new Date(dateStr);
-            if(isNaN(date.getTime())) {
-                return `${dayStr.toLowerCase()}, ${dateStr}`;
-            }
-
+            if(isNaN(date.getTime())) return `${dayStr.toLowerCase()}, ${dateStr}`;
             let formatted = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
             if(!formatted.endsWith('.')) formatted += ' г.';
             return `${dayStr.toLowerCase()}, ${formatted}`;
         }
 
-        function updateGlobalHeader(firstWeekDay) {
-            const dayName = firstWeekDay || "Воскресенье";
-            document.getElementById('globalDayTime').innerHTML = `(${dayName} 16<span class="time-super">00</span>)`;
-        }
-
+        // Парсинг ответа Google API с привязкой к текстовым ключам из колонки А
         function parseGoogleResponse(text) {
-            // Отрезаем гугловскую обертку google.visualization.Query.setResponse(...)
             const rawJson = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
             const json = JSON.parse(rawJson);
             const rows = json.table.rows;
 
-            // Создаем структуру под наши 4 колонки (B=1, D=3, F=5, H=7)
-            const data = { "B": [], "D": [], "F": [], "H": [] };
+            // Создаем объекты для накопления ключ -> значение
+            const data = { "B": {}, "D": {}, "F": {}, "H": {} };
             const targetCols = { 1: "B", 3: "D", 5: "F", 7: "H" };
 
-            // Заполняем плоские массивы строк, убирая лишние пробелы
+            // Перебираем все строки таблицы
             for (let r = 0; r < rows.length; r++) {
                 const cells = rows[r].c;
+                if (!cells || !cells[0]) continue;
+                
+                // Ключ берется из колонки А (индекс 0)
+                let key = cells[0].v ? cells[0].v.toString().trim() : "";
+                if (!key) continue;
+
+                // Для каждой целевой колонки вытягиваем значение
                 [1, 3, 5, 7].forEach(colIdx => {
                     const cellObj = cells[colIdx];
                     let val = (cellObj && cellObj.v !== null) ? cellObj.f || cellObj.v : "";
-                    data[targetCols[colIdx]].push(val.toString().trim());
+                    
+                    // Если у нас несколько одинаковых ключей (например, Председатель или Песня№ в блоке РС),
+                    // мы сохраняем их в массив, чтобы разделять верхний блок и блок РС.
+                    const colKey = targetCols[colIdx];
+                    if (!data[colKey][key]) {
+                        data[colKey][key] = [];
+                    }
+                    data[colKey][key].push(val.toString().trim());
                 });
             }
             return data;
@@ -366,16 +360,20 @@
             container.innerHTML = '';
             const columns = ["B", "D", "F", "H"];
             
-            // Устанавливаем глобальный день недели по первой колонке
-            if (data["B"]) updateGlobalHeader(data["B"][4]);
+            // Глобальный день недели берем из первого значения ключа "ДЕНЬ" в колонке B
+            if (data["B"]["ДЕНЬ"]) {
+                const dayName = data["B"]["ДЕНЬ"][0] || "Воскресенье";
+                document.getElementById('globalDayTime').innerHTML = `(${dayName} 16<span class="time-super">00</span>)`;
+            }
             
             columns.forEach(col => {
-                const row = data[col];
-                if (!row) return;
+                const dict = data[col];
+                if (!dict || !dict["ТипНедели"]) return;
 
-                const type = row[2];      
-                const dateRaw = row[3];   
-                const dayName = row[4];   
+                // Безопасно достаем базовые параметры по ключам
+                const type = dict["ТипНедели"][0] || "Обычная";      
+                const dateRaw = dict["ДАТА"] ? dict["ДАТА"][0] : "";   
+                const dayName = dict["ДЕНЬ"] ? dict["ДЕНЬ"][0] : "Воскресенье";   
                 
                 const card = document.createElement('div');
                 card.className = 'week-card';
@@ -390,49 +388,56 @@
 
                 if (type === "Конгресс") {
                     card.classList.add('type-congress');
-                    const congText = row[24] || "РЕГИОНАЛЬНЫЙ КОНГРЕСС"; 
+                    // Для конгресса ищем текст в самом конце (обычно строка Региональный конгресс)
+                    const congText = dict["Региональный конгресс"] ? dict["Региональный конгресс"][0] : "РЕГИОНАЛЬНЫЙ КОНГРЕСС"; 
                     bodyBlock.className = 'congress-content-wrapper';
                     bodyBlock.innerHTML = `<div class="congress-text">${congText}</div>`;
-                    card.appendChild(bodyBlock);
                 } 
                 else if (type === "Визит РС") {
                     card.classList.add('type-rs');
                     
+                    // Так как ключи дублируются в блоке РС (они идут вторыми в списке массивов), 
+                    // мы строго берем второй элемент [1], если он есть, иначе первый [0].
+                    const getRSVal = (key) => {
+                        if (!dict[key]) return "";
+                        return dict[key].length > 1 ? dict[key][1] : dict[key][0];
+                    };
+
                     bodyBlock.innerHTML = `
-                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[14] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[15] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[16] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${getRSVal("Председатель")}</div></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${getRSVal("Песня№")}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${getRSVal("Молитва1")}</div></div>
                         
-                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${row[17] || ''}</span></div>
-                        <div class="speech-topic">«${row[18] || ''}»</div>
+                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${getRSVal("Докладчик")}</span></div>
+                        <div class="speech-topic">«${getRSVal("НазваниеРечи")}»</div>
                         
                         <div class="sb-heading">Сторожевая Башня</div>
-                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${row[19] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${getRSVal("ВедущийСТ")}</div></div>
                         
-                        <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${row[20] || ''}</span></div>
-                        <div class="speech-topic">«${row[21] || ''}»</div>
+                        <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${getRSVal("Докладчик2") || getRSVal("Закл.речь")}</span></div>
+                        <div class="speech-topic">«${getRSVal("НазваниеРечи2") || getRSVal("Тема2")}»</div>
                         
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[22] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">ВПС:</div><div class="item-value">${row[23] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${getRSVal("Молитва2")}</div></div>
+                        <div class="item-row"><div class="item-label">ВПС:</div><div class="item-value">${getRSVal("ВПС")}</div></div>
                     `;
-                    card.appendChild(bodyBlock);
                 } 
                 else {
-                    // Обычная неделя
+                    // Обычная неделя — всегда берем самые первые вхождения ключей [0]
+                    const getNormalVal = (key) => (dict[key] ? dict[key][0] : "");
+
                     bodyBlock.innerHTML = `
-                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[5] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[6] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[7] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${getNormalVal("Председатель")}</div></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${getNormalVal("Песня№")}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${getNormalVal("IntegratedМолитва") || getNormalVal("Молитва1")}</div></div>
                         
-                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${row[8] || ''}</span></div>
-                        <div class="speech-topic">«${row[9] || ''}»</div>
+                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${getNormalVal("Докладчик")}</span></div>
+                        <div class="speech-topic">«${getNormalVal("НазваниеРечи")}»</div>
                         
                         <div class="sb-heading">Сторожевая Башня</div>
-                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${row[10] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Чтец:</div><div class="item-value">${row[11] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[12] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${getNormalVal("ВедущийСТ")}</div></div>
+                        <div class="item-row"><div class="item-label">Чтец:</div><div class="item-value">${getNormalVal("ЧтецСТ")}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${getNormalVal("Молитва2")}</div></div>
                     `;
-                    card.appendChild(bodyBlock);
                 }
 
                 card.appendChild(bodyBlock);
@@ -440,7 +445,7 @@
             });
         }
 
-        // Загрузка данных напрямую по ссылке
+        // Загрузка
         fetch(JSON_URL)
             .then(response => response.text())
             .then(dataText => {
@@ -456,7 +461,6 @@
                 document.getElementById('loadingMessage').innerHTML = "❌ Ошибка загрузки данных таблицы. Проверь ID и доступы. <br><small>" + error + "</small>";
             });
 
-        // Кнопки управления видами
         toggleBtn.addEventListener('click', () => {
             if (container.classList.contains('view-2x2')) {
                 container.classList.remove('view-2x2');
