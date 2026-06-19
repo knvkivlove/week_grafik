@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Публичная встреча и Изучение Сторожевой башни</title>
     <style>
         :root {
@@ -39,6 +39,7 @@
 
         .controls {
             max-width: 820px;
+            min-width: 820px; /* Зафиксировали ширину панели управления */
             margin: 0 auto 20px auto;
             display: none; 
             justify-content: flex-end;
@@ -46,11 +47,11 @@
             padding: 10px 20px;
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            transition: max-width 0.3s ease;
         }
 
         body.view-mode-4x1 .controls {
             max-width: 1300px;
+            min-width: 1300px;
         }
 
         .btn-group {
@@ -80,16 +81,17 @@
 
         .page-wrapper {
             max-width: 820px; 
+            min-width: 820px; /* Изменено здесь: жестко держим ширину А4, чтобы верстка не "скукоживалась" */
             margin: 0 auto;
             background: #fff;
             padding: 30px 40px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: max-width 0.3s ease;
             display: none; 
         }
 
         body.view-mode-4x1 .page-wrapper {
             max-width: 1300px;
+            min-width: 1300px; /* Для горизонтального режима тоже держим ширину */
         }
 
         .main-header {
@@ -246,7 +248,7 @@
         .week-card.type-congress .congress-text {
             font-size: 13pt;
             font-weight: bold;
-            color: var(--rs-red); /* Текст конгресса теперь красный */
+            color: var(--rs-red); 
             text-align: center;
             text-transform: uppercase;
             line-height: 1.4;
@@ -255,7 +257,7 @@
         @media print {
             body { background: #fff; padding: 0; }
             .controls { display: none !important; }
-            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; }
             .week-card { page-break-inside: avoid; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body.print-2x2 { @page { size: portrait; margin: 10mm; } }
@@ -360,7 +362,6 @@
             const dayIdx  = labels.findIndex(l => l.toLowerCase().includes("день"));
             const rsSeparatorIdx = labels.findIndex(l => l.toLowerCase().includes("посещение районного"));
 
-             /* Здесь поменять время начала встречи 16<span (16 или 10 или 14 и т.д.)) */
             if (data["B"] && dayIdx !== -1) {
                 document.getElementById('globalDayTime').innerHTML = `(${data["B"][dayIdx]} 16<span class="time-super">00</span>)`;
             }
