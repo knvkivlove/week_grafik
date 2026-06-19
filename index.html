@@ -361,7 +361,7 @@
             const rsSeparatorIdx = labels.findIndex(l => l.toLowerCase().includes("посещение районного"));
 
             if (data["B"] && dayIdx !== -1) {
-                document.getElementById('globalDayTime').innerHTML = `(${data["B"][dayIdx]} 16<span class="time-super">00</span>)`;
+                document.getElementById('globalDayTime').innerHTML = `(${data["B"][dayIdx]} 10<span class="time-super">00</span>)`;
             }
 
             columns.forEach(col => {
