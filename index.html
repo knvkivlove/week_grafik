@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Публичная встреча и Изучение Сторожевой башни</title>
     <style>
         :root {
@@ -77,14 +77,13 @@
             color: #fff;
         }
 
-        /* ГЛАВНЫЙ КОНТЕЙНЕР ДЛЯ МАСШТАБИРОВАНИЯ НА МОБИЛЬНЫХ */
+        /* КОНТЕЙНЕР МАСШТАБИРОВАНИЯ: убрали любые запреты на overflow, чтобы зум работал корректно */
         .mobile-scale-container {
             width: 100%;
             position: relative;
             transform-origin: top left;
         }
 
-        /* Возвращаем стандартные жесткие размеры в pt/px, чтобы верстка была идеальной */
         .page-wrapper {
             width: 820px; 
             max-width: 820px;
@@ -316,7 +315,6 @@
         const pageWrapper = document.getElementById('pageWrapperBlock');
         const scaleContainer = document.getElementById('scaleContainerBlock');
 
-        // ИСПРАВЛЕННЫЙ МАСШТАБАТОР: Вычисляет размер и жестко корректирует высоту родителя
         function adjustMobileZoom() {
             if (window.innerWidth <= 840) {
                 const targetWidth = container.classList.contains('view-4x1') ? 1300 : 820;
@@ -325,9 +323,6 @@
                 
                 scaleContainer.style.transform = `scale(${scaleFactor})`;
                 scaleContainer.style.width = `${targetWidth}px`;
-                
-                // РЕШЕНИЕ: Корректируем реальную физическую высоту контейнера под масштаб, 
-                // благодаря чему нижняя часть страницы не обрезается и нет белого пустого поля!
                 scaleContainer.style.height = `${pageWrapper.offsetHeight * scaleFactor}px`;
             } else {
                 scaleContainer.style.transform = 'none';
@@ -339,7 +334,7 @@
         function setFormattedTime(dayName) {
             // ==========================================
             // ПРИМЕЧАНИЕ ДЛЯ РЕДАКТИРОВАНИЯ ВРЕМЕНИ:
-            // Если нужно поменять время проведения встречи в коде, измени строку ниже:
+            // Измени строку ниже, чтобы задать нужное время:
             // ==========================================
             let defaultTime = "16:00"; 
             
@@ -507,9 +502,7 @@
                 container.appendChild(card);
             });
 
-            // Корректируем масштаб сразу после отрисовки
             adjustMobileZoom();
-            // Делаем микро-контроль для старых мобилок
             setTimeout(adjustMobileZoom, 100);
         }
 
