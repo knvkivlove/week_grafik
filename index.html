@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>График Выходного Дня</title>
+    <title>Публичная встреча и Изучение Сторожевой башни</title>
     <style>
         :root {
             --bg-color: #f4f6f9;
             --card-bg: #ffffff;
-            --text-main: #333333;
-            --text-muted: #666666;
-            --accent-blue: #0b3040;
-            --light-blue: #c1e5f5;
-            --border-color: #0b3040;
-            --rs-bg: #fafffb;
-            --rs-border: #2e7d32;
-            --cong-bg: #fffbf0;
-            --cong-border: #f57c00;
+            --main-blue: #0066b3; /* Насыщенный синий цвет со скриншота */
+            --text-dark: #000000;
+            --text-blue: #0066b3;
+            --rs-red: #d32f2f;   /* Красный цвет для выделения визита РС */
         }
 
         * {
@@ -26,29 +21,22 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: "Arial", sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-main);
+            color: var(--text-dark);
             padding: 20px;
-            line-height: 1.4;
         }
 
         /* Панель управления */
         .controls {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto 20px auto;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: flex-end;
             background: #fff;
-            padding: 15px 20px;
-            border-radius: 8px;
+            padding: 10px 20px;
+            border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .controls h1 {
-            font-size: 1.2rem;
-            color: var(--accent-blue);
         }
 
         .btn-group {
@@ -57,50 +45,68 @@
         }
 
         button {
-            padding: 10px 16px;
+            padding: 8px 16px;
             font-size: 0.9rem;
-            font-weight: 600;
+            font-weight: bold;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            transition: all 0.1s ease;
         }
 
         .btn-toggle {
-            background-color: var(--light-blue);
-            color: var(--accent-blue);
-        }
-
-        .btn-toggle:hover {
-            background-color: #aeddf2;
+            background-color: #e1f5fe;
+            color: var(--main-blue);
         }
 
         .btn-print {
-            background-color: var(--accent-blue);
+            background-color: var(--main-blue);
             color: #fff;
-        }
-
-        .btn-print:hover {
-            background-color: #071f2a;
         }
 
         .hidden-element {
             display: none !important;
         }
 
-        /* Главный контейнер сетки */
-        .schedule-container {
-            max-width: 1200px;
+        /* Общая обертка для А4 */
+        .page-wrapper {
+            max-width: 900px;
             margin: 0 auto;
-            display: grid;
-            gap: 20px;
-            transition: all 0.3s ease;
+            background: #fff;
+            padding: 20px 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        /* Режимы отображения */
+        /* Главные неизменяемые заголовки */
+        .main-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .global-day-time {
+            font-size: 22pt;
+            font-weight: normal;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .global-day-time .time-super {
+            font-size: 14pt;
+            vertical-align: super;
+        }
+
+        .global-title {
+            font-size: 18pt;
+            font-weight: bold;
+            color: var(--main-blue);
+        }
+
+        /* Сетка карточек */
+        .schedule-container {
+            display: grid;
+            gap: 20px;
+        }
+
         .view-2x2 {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -109,103 +115,129 @@
             grid-template-columns: repeat(4, 1fr);
         }
 
-        /* Стиль карточки недели */
+        /* Дизайн карточки со скриншота */
         .week-card {
             background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            border: 2px solid var(--main-blue);
             display: flex;
             flex-direction: column;
-            position: relative;
+            padding: 0;
+            overflow: hidden;
         }
 
-        .week-header {
+        .week-header-block {
             text-align: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .week-date {
-            font-size: 1.15rem;
+            border-bottom: 1px solid var(--main-blue);
+            padding: 6px;
+            font-size: 12pt;
             font-weight: bold;
-            color: var(--accent-blue);
-            text-transform: capitalize;
         }
 
-        /* Элементы программы */
-        .program-row {
+        .card-body {
+            padding: 10px 14px;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            flex-direction: column;
+            height: 100%;
         }
 
-        .label {
-            font-weight: bold;
-            color: var(--text-muted);
-            padding-right: 10px;
+        /* Строки пунктов программы */
+        .item-row {
+            display: flex;
+            margin-bottom: 5px;
+            font-size: 11pt;
+            line-height: 1.3;
         }
 
-        .value {
+        .item-label {
+            font-style: italic;
+            width: 110px;
+            flex-shrink: 0;
             text-align: right;
-            font-weight: 600;
+            padding-right: 8px;
         }
 
-        .speech-title {
-            grid-column: 1 / -1;
-            text-align: center;
+        .item-value {
             font-weight: bold;
-            color: var(--accent-blue);
-            margin: 10px 0;
-            font-size: 1.05rem;
-            text-transform: uppercase;
+            color: var(--text-blue);
         }
 
-        .section-title {
-            font-weight: bold;
-            color: var(--accent-blue);
-            border-bottom: 1px dashed var(--light-blue);
-            margin: 12px 0 6px 0;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-        }
-
-        /* Специфические стили для Визита РС */
-        .week-card.type-rs {
-            background-color: var(--rs-bg);
-            border-color: var(--rs-border);
-        }
-        .week-card.type-rs .week-date {
-            color: var(--rs-border);
-        }
-        .week-card.type-rs .section-title {
-            border-bottom-color: #c8e6c9;
-            color: var(--rs-border);
-        }
-
-        /* Специфические стили для Конгресса */
-        .week-card.type-congress {
-            background-color: var(--cong-bg);
-            border-color: var(--cong-border);
+        /* Специфическая строка "Речь:" */
+        .speech-row {
+            display: flex;
             justify-content: center;
-            align-items: center;
-            min-height: 300px;
+            margin: 4px 0;
+            font-size: 11pt;
+        }
+        .speech-row .label-bold {
+            font-weight: bold;
+            padding-right: 6px;
+        }
+        .speech-row .value-bold {
+            font-weight: bold;
+            color: var(--text-blue);
         }
 
-        .congress-text {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: var(--cong-border);
+        /* Название речи большими буквами по центру */
+        .speech-topic {
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-blue);
+            font-size: 12pt;
+            margin: 12px 0;
+            padding: 0 5px;
+            text-transform: uppercase;
+            line-height: 1.3;
+        }
+
+        /* Маленький заголовок Сторожевой Башни */
+        .sb-heading {
+            font-weight: bold;
+            font-size: 11pt;
+            color: var(--text-dark);
+            text-align: left;
+            margin: 8px 0 6px 0;
+            border-top: 1px solid var(--main-blue);
+            padding-top: 6px;
+        }
+
+        /* Визиты Районного Старейшины (Красная тема) */
+        .week-card.type-rs {
+            border: 2px solid var(--rs-red);
+        }
+        .week-card.type-rs .week-header-block {
+            border-bottom: 2px solid var(--rs-red);
+        }
+        .week-card.type-rs .item-value,
+        .week-card.type-rs .speech-row .value-bold,
+        .week-card.type-rs .speech-topic {
+            color: var(--rs-red);
+        }
+        .week-card.type-rs .sb-heading {
+            border-top: 2px solid var(--rs-red);
+        }
+
+        /* Конгрессы */
+        .week-card.type-congress {
+            justify-content: flex-start;
+            min-height: 320px;
+        }
+        .week-card.type-congress .congress-content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .week-card.type-congress .congress-text {
+            font-size: 14pt;
+            font-weight: bold;
+            color: var(--text-dark);
             text-align: center;
             text-transform: uppercase;
-            padding: 20px;
-            letter-spacing: 1px;
+            line-height: 1.4;
         }
 
-        /* Стили для печати на А4 */
+        /* Стили для вывода на печать А4 */
         @media print {
             body {
                 background: #fff;
@@ -214,14 +246,17 @@
             .controls {
                 display: none !important;
             }
-            .schedule-container {
-                display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important; /* На бумаге всегда 2х2 */
-                gap: 15px !important;
+            .page-wrapper {
+                box-shadow: none !important;
+                padding: 0 !important;
                 max-width: 100% !important;
             }
+            .schedule-container {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 15px !important;
+            }
             .week-card {
-                box-shadow: none !important;
                 page-break-inside: avoid;
             }
         }
@@ -230,24 +265,30 @@
 <body>
 
     <div class="controls">
-        <h1>Расписание встреч выходного дня</h1>
         <div class="btn-group">
             <button class="btn-toggle" id="toggleGridBtn">📱 Вид: Ряд 4х1</button>
             <button class="btn-print" id="printBtn">🖨️ Печать / PDF</button>
         </div>
     </div>
 
-    <div class="schedule-container view-2x2" id="scheduleContainer">
+    <div class="page-wrapper">
+        <!-- Шапка листа -->
+        <div class="main-header">
+            <div class="global-day-time" id="globalDayTime">(Воскресенье <span id="globalTime">16<span class="time-super">00</span></span>)</div>
+            <div class="global-title">Публичная встреча и Изучение Сторожевой башни</div>
         </div>
 
+        <!-- Контейнер с четырьмя неделями -->
+        <div class="schedule-container view-2x2" id="scheduleContainer"></div>
+    </div>
+
     <script>
-        // Имитация ответа от бэкенда Google Sheets (массив строк, где индексы совпадают с твоей структурой)
-        // В реальном проекте этот объект будет приходить через fetch() из Google Apps Script
+        // Данные сопоставлены с индексами ячеек твоего файла week_grafik.xlsx
         const mockSheetsData = {
-            "B": ["Параметр", "Неделя 1", "Обычная", "2026-07-05", "Воскресенье", "Гнатюк С.", "124", "Гнатюк С.", "Загребельный В.", "ЧТО НУЖНО СЕЯТЬ, ЧТОБЫ ПОЖАТЬ ВЕЧНУЮ ЖИЗНЬ?", "Гнатюк С.", "Жуков В.", "84", "", "", "", "", "", "", "", "", "", "", "", ""],
-            "D": ["Параметр", "Неделя 2", "Визит РС", "2026-07-12", "Воскресенье", "Гнатюк С.", "104", "Брат 2", "Панасенко П.", "ЧТО НУЖНО СЕЯТЬ, ЧТОБЫ ПОЖАТЬ ВЕЧНУЮ ЖИЗНЬ?", "Гнатюк С.", "Брат 5", "—", "Соболь Анатолий", "33", "Сушинский Ярослав", "Панасенко Павел", "ПОСМОТРИ НА ГОРЫ!", "Гнатюк Сергей", "Панасенко Павел", "ЕЩЕ ОДНА РЕЧЬ", "Панасенко Павел", "Панасенко Павел", ""],
-            "F": ["Параметр", "Неделя 3", "Конгресс", "2026-07-19", "Воскресенье", "Криворучко В.", "", "Криворучко В.", "Скрыпник Д.", "Тема речи", "Братченко О.", "Беля Ю.", "Скрыпник Д.", "", "", "", "", "", "", "", "", "", "", "", "Региональный конгресс"],
-            "H": ["Параметр", "Неделя 4", "Обычная", "2026-07-26", "Воскресенье", "Криворучко В.", "113", "Агафуров А.", "Ярмолюк И.", "КАК В МИРЕ, ПОЛНОМ ГНЕВА, РАЗВИВАТЬ МИРОЛЮБИЕ", "Гнатюк С.", "Харченко В.", "84", "", "", "", "", "", "", "", "", "", "", "", ""]
+            "B": ["Параметр", "Неделя 1", "Обычная", "2026-08-02", "Воскресенье", "Братченко О.", "147", "Беля Ю.", "Криворучко В.", "КАК УЗНАТЬ, ЧТО ПРИНЕСЕТ НАМ БУДУЩЕЕ?", "Гнатюк С.", "Беля Ю.", "Криворучко В.", "", "", "", "", "", "", "", "", "", "", "", ""],
+            "D": ["Параметр", "Неделя 2", "Обычная", "2026-08-09", "Воскресенье", "Пелех М.", "151", "Кучеренко А.", "Кивенко Д.", "ВОСКРЕСЕНИЕ — ПОБЕДА НАД СМЕРТЬЮ!", "Гнатюк С.", "Криворучко В.", "Кивенко Д.", "", "", "", "", "", "", "", "", "", "", "", ""],
+            "F": ["Параметр", "Неделя 3", "Визит РС", "2026-08-16", "Воскресенье", "Криворучко В.", "113", "Брат 1", "Панасенко П.", "Тема речи", "Братченко О.", "Беля Ю.", "Скрыпник Д.", "Полтавец В.", "104", "Пелех М.", "Панасенко П.", "«ЧТО НУЖНО СЕЯТЬ, ЧТОБЫ ПОЖАТЬ ВЕЧНУЮ ЖИЗНЬ?»", "Гнатюк С.", "Панасенко П.", "ПОСМОТРИ НА ГОРЫ!", "24", "Панасенко П.", ""],
+            "H": ["Параметр", "Неделя 4", "Обычная", "2026-08-23", "Воскресенье", "Криворучко В.", "127", "Сушинский Я.", "Тарасов Е.", "БУДЬТЕ ЧЕСТНЫМИ ВО ВСЁМ", "Братченко О.", "Полтавец И.", "Тарасов Е.", "", "", "", "", "", "", "", "", "", "", "", ""]
         };
 
         const columns = ["B", "D", "F", "H"];
@@ -255,110 +296,126 @@
         const toggleBtn = document.getElementById('toggleGridBtn');
         const printBtn = document.getElementById('printBtn');
 
-        // Красивое форматирование даты
+        // Преобразование даты в формат: "воскресенье, 2 августа 2026 г."
         function formatCardDate(dateStr, dayStr) {
             if(!dateStr) return '';
             const date = new Date(dateStr);
             const options = { day: 'numeric', month: 'long', year: 'numeric' };
-            const formattedDate = date.toLocaleDateString('ru-RU', options);
-            return `${dayStr.toLowerCase()}, ${formattedDate}`;
+            let formatted = date.toLocaleDateString('ru-RU', options);
+            // Добавляем точку к "г", если её нет
+            if(!formatted.endsWith('.')) formatted += ' г.';
+            return `${dayStr.toLowerCase()}, ${formatted}`;
         }
 
-        // Функция генерации HTML для карточки
+        // Обновление глобального заголовка (День недели и Время из первой доступной колонки B)
+        function updateGlobalHeader(data) {
+            const firstWeek = data["B"];
+            if (firstWeek) {
+                const dayName = firstWeek[4] || "Воскресенье";
+                // Предполагаем время 16:00, превращаем в красивый формат 16⁰⁰
+                const timeStr = "16:00"; 
+                const hour = timeStr.split(':')[0] || '16';
+                const min = timeStr.split(':')[1] || '00';
+                
+                document.getElementById('globalDayTime').innerHTML = `(${dayName} ${hour}<span class="time-super">${min}</span>)`;
+            }
+        }
+
         function renderSchedule(data) {
             container.innerHTML = '';
+            updateGlobalHeader(data);
             
             columns.forEach(col => {
                 const row = data[col];
                 if (!row) return;
 
-                // Извлекаем метаданные по точным индексам твоей таблицы
-                const type = row[2]; // Строка 3: ТипНедели
-                const dateRaw = row[3]; // Строка 4: ДАТА
-                const dayName = row[4]; // Строка 5: ДЕНЬ
+                const type = row[2];      // Строка 3: ТипНедели
+                const dateRaw = row[3];   // Строка 4: ДАТА
+                const dayName = row[4];   // Строка 5: ДЕНЬ
                 
                 const card = document.createElement('div');
                 card.className = 'week-card';
 
-                // Заголовок карточки с датой
-                const header = document.createElement('div');
-                header.className = 'week-header';
-                header.innerHTML = `<div class="week-date">${formatCardDate(dateRaw, dayName)}</div>`;
-                card.appendChild(header);
+                // Хедер карточки с датой
+                const headerBlock = document.createElement('div');
+                headerBlock.className = 'week-header-block';
+                headerBlock.textContent = formatCardDate(dateRaw, dayName);
+                card.appendChild(headerBlock);
 
-                // Отрисовка контента в зависимости от типа недели
+                const bodyBlock = document.createElement('div');
+                bodyBlock.className = 'card-body';
+
                 if (type === "Конгресс") {
                     card.classList.add('type-congress');
-                    const congText = row[24] || "КОНГРЕСС"; // Строка 25: КОНГРЕСС
-                    card.innerHTML += `<div class="congress-text">${congText}</div>`;
+                    const congText = row[24] || "РЕГИОНАЛЬНЫЙ КОНГРЕСС"; // Строка 25
+                    bodyBlock.className = 'congress-content-wrapper';
+                    bodyBlock.innerHTML = `<div class="congress-text">${congText}</div>`;
+                    card.appendChild(bodyBlock);
                 } 
                 else if (type === "Визит РС") {
                     card.classList.add('type-rs');
                     
-                    // Собираем структуру Визита РС (строки 14-24 в массиве сдвинуты на 1 из-за 0-индекса)
-                    card.innerHTML += `
-                        <div class="program-row"><span class="label">Председатель:</span><span class="value">${row[14] || '—'}</span></div>
-                        <div class="program-row"><span class="label">Песня № и молитва:</span><span class="value">${row[15] || '—'} и ${row[16] || '—'}</span></div>
+                    // Строгая структура визита РС по Твоему указанию и скриншоту
+                    bodyBlock.innerHTML = `
+                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[14] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[15] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[16] || ''}</div></div>
                         
-                        <div class="section-title">Публичная речь (30 мин)</div>
-                        <div class="program-row"><span class="label">Докладчик:</span><span class="value">${row[17] || '—'}</span></div>
-                        <div class="speech-title">«${row[18] || '—'}»</div>
+                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${row[17] || ''}</span></div>
+                        <div class="speech-topic">${row[18] || ''}</div>
                         
-                        <div class="section-title">Изучение «Сторожевой Башни»</div>
-                        <div class="program-row"><span class="label">(без зачитывания 30 мин) Ведущий:</span><span class="value">${row[19] || '—'}</span></div>
+                        <div class="sb-heading">Сторожевая Башня</div>
+                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${row[19] || ''}</div></div>
                         
-                        <div class="section-title">Заключительная речь (30 мин)</div>
-                        <div class="program-row"><span class="label">Докладчик:</span><span class="value">${row[20] || '—'}</span></div>
-                        <div class="speech-title">«${row[21] || '—'}»</div>
+                        <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${row[20] || ''}</span></div>
+                        <div class="speech-topic">${row[21] || ''}</div>
                         
-                        <div class="program-row"><span class="label">Песня № и молитва:</span><span class="value">${row[22] || '—'} и ${row[23] || '—'}</span></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[22] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[23] || ''}</div></div>
                     `;
+                    card.appendChild(bodyBlock);
                 } 
                 else {
-                    // Обычная неделя (строки 5-13)
-                    card.innerHTML += `
-                        <div class="program-row"><span class="label">Председатель:</span><span class="value">${row[5] || '—'}</span></div>
-                        <div class="program-row"><span class="label">Песня № и молитва:</span><span class="value">${row[6] || '—'} и ${row[7] || '—'}</span></div>
+                    // Обычная неделя (Строки 5-13)
+                    bodyBlock.innerHTML = `
+                        <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[5] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[6] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[7] || ''}</div></div>
                         
-                        <div class="section-title">Публичная встреча</div>
-                        <div class="program-row"><span class="label">Докладчик:</span><span class="value">${row[8] || '—'}</span></div>
-                        <div class="speech-title">«${row[9] || '—'}»</div>
+                        <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${row[8] || ''}</span></div>
+                        <div class="speech-topic">${row[9] || ''}</div>
                         
-                        <div class="section-title">Изучение «Сторожевой Башни»</div>
-                        <div class="program-row"><span class="label">Ведущий:</span><span class="value">${row[10] || '—'}</span></div>
-                        <div class="program-row"><span class="label">Чтец:</span><span class="value">${row[11] || '—'}</span></div>
-                        
-                        <div class="program-row" style="margin-top: 15px;"><span class="label">Песня № и молитва:</span><span class="value">${row[12] || '—'} и ${row[13] || '—'}</span></div>
+                        <div class="sb-heading">Сторожевая Башня</div>
+                        <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${row[10] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Чтец:</div><div class="item-value">${row[11] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${row[12] || ''}</div></div>
                     `;
+                    card.appendChild(bodyBlock);
                 }
 
                 container.appendChild(card);
             });
         }
 
-        // Логика управления переключением видов сеток и отображением кнопки печати
+        // Логика переключения сеток и скрытия печати
         toggleBtn.addEventListener('click', () => {
             if (container.classList.contains('view-2x2')) {
-                // Переключаем на горизонтальную ленту 4х1
                 container.classList.remove('view-2x2');
                 container.classList.add('view-4x1');
                 toggleBtn.textContent = '📱 Вид: Сетка 2х2';
-                printBtn.classList.add('hidden-element'); // Прячем печать
+                printBtn.classList.add('hidden-element');
             } else {
-                // Возвращаем сетку 2х2
                 container.classList.remove('view-4x1');
                 container.classList.add('view-2x2');
                 toggleBtn.textContent = '📱 Вид: Ряд 4х1';
-                printBtn.classList.remove('hidden-element'); // Показываем печать
+                printBtn.classList.remove('hidden-element');
             }
         });
 
-        // Кнопка вызова стандартного диалога печати
         printBtn.addEventListener('click', () => {
             window.print();
         });
 
-        // Первичная инициализация страницы данными
         renderSchedule(mockSheetsData);
     </script>
 </body>
