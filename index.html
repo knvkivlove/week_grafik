@@ -12,6 +12,9 @@
             --text-dark: #000000;
             --text-blue: #0066b3;
             --rs-red: #d32f2f;   
+            /* Пастельные плашки для шапок */
+            --pastel-blue: #e6f2fa; 
+            --pastel-red: #fdf2f2;  
         }
 
         * {
@@ -71,7 +74,7 @@
 
         /* Контейнер листа А4 */
         .page-wrapper {
-            max-width: 820px; /* Вертикальные пропорции по умолчанию */
+            max-width: 820px; /* Вертикальные пропорции А4 по умолчанию */
             margin: 0 auto;
             background: #fff;
             padding: 30px 40px;
@@ -132,10 +135,12 @@
             overflow: hidden;
         }
 
+        /* Пастельная плашка для хедера карточки (Обычная неделя) */
         .week-header-block {
             text-align: center;
+            background-color: var(--pastel-blue);
             border-bottom: 1px solid var(--main-blue);
-            padding: 8px;
+            padding: 10px;
             font-size: 12pt;
             font-weight: bold;
         }
@@ -212,11 +217,12 @@
             padding-top: 6px;
         }
 
-        /* Визиты РС (Красная тема) */
+        /* Визиты РС (Красная тема + Пастельно-розовая плашка) */
         .week-card.type-rs {
             border: 2px solid var(--rs-red);
         }
         .week-card.type-rs .week-header-block {
+            background-color: var(--pastel-red);
             border-bottom: 1px solid var(--rs-red);
         }
         .week-card.type-rs .item-value,
@@ -267,6 +273,12 @@
                 page-break-inside: avoid;
             }
 
+            /* Включаем фоновые пастельные цвета при печати */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
             /* 2х2 печатается на Книжном (вертикальном) листе */
             body.print-2x2 {
                 @page { size: portrait; margin: 10mm; }
@@ -308,7 +320,6 @@
     </div>
 
     <script>
-        // Имитируем очищенные, ровные данные из Google Sheets без сдвигов
         const mockSheetsData = {
             "B": ["Параметр", "Неделя 1", "Обычная", "2026-08-02", "Воскресенье", "Братченко О.", "147", "Беля Ю.", "Криворучко В.", "КАК УЗНАТЬ, ЧТО ПРИНЕСЕТ НАМ БУДУЩЕЕ?", "Гнатюк С.", "Беля Ю.", "Криворучко В.", "", "", "", "", "", "", "", "", "", "", "", ""],
             "D": ["Параметр", "Неделя 2", "Обычная", "2026-08-09", "Воскресенье", "Пелех М.", "151", "Кучеренко А.", "Кивенко Д.", "ВОСКРЕСЕНИЕ — ПОБЕДА НАД СМЕРТЬЮ!", "Гнатюк С.", "Криворучко В.", "Кивенко Д.", "", "", "", "", "", "", "", "", "", "", "", ""],
@@ -350,9 +361,9 @@
                 const row = data[col];
                 if (!row) return;
 
-                const type = row[2];      // Строка 3
-                const dateRaw = row[3];   // Строка 4
-                const dayName = row[4];   // Строка 5
+                const type = row[2];      
+                const dateRaw = row[3];   
+                const dayName = row[4];   
                 
                 const card = document.createElement('div');
                 card.className = 'week-card';
@@ -367,7 +378,7 @@
 
                 if (type === "Конгресс") {
                     card.classList.add('type-congress');
-                    const congText = row[24] || "РЕГИОНАЛЬНЫЙ КОНГРЕСС"; // Строка 25
+                    const congText = row[24] || "РЕГИОНАЛЬНЫЙ КОНГРЕСС"; 
                     bodyBlock.className = 'congress-content-wrapper';
                     bodyBlock.innerHTML = `<div class="congress-text">${congText}</div>`;
                     card.appendChild(bodyBlock);
@@ -375,7 +386,6 @@
                 else if (type === "Визит РС") {
                     card.classList.add('type-rs');
                     
-                    // ТОЧНОЕ СООТВЕТСТВИЕ СТРОКАМ ТАБЛИЦЫ
                     bodyBlock.innerHTML = `
                         <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[14] || ''}</div></div>
                         <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[15] || ''}</div></div>
@@ -396,7 +406,6 @@
                     card.appendChild(bodyBlock);
                 } 
                 else {
-                    // Обычная неделя (Строки 5-13)
                     bodyBlock.innerHTML = `
                         <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${row[5] || ''}</div></div>
                         <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${row[6] || ''}</div></div>
