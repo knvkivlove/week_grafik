@@ -215,16 +215,18 @@
             padding-top: 6px;
         }
 
-        /* Визит РС */
-        .week-card.type-rs {
+        /* Общие стили для красных карточек (Визит РС и Конгресс) */
+        .week-card.type-rs,
+        .week-card.type-congress {
             border: 2px solid var(--rs-red);
         }
-        .week-card.type-rs .week-header-block {
+        .week-card.type-rs .week-header-block,
+        .week-card.type-congress .week-header-block {
             background-color: var(--pastel-red);
             border-bottom: 1px solid var(--rs-red);
         }
-        .week-card.type-rs .item-value,
-        .week-card.type-rs .speech-row .value-bold,
+
+        /* Специфические выделения текстов в Визите РС */
         .week-card.type-rs .speech-topic {
             color: var(--rs-red);
         }
@@ -233,21 +235,18 @@
         }
 
         /* Конгресс */
-        .week-card.type-congress {
-            justify-content: flex-start;
-            min-height: 320px;
-        }
         .week-card.type-congress .congress-content-wrapper {
             flex-grow: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            min-height: 250px;
         }
         .week-card.type-congress .congress-text {
             font-size: 13pt;
             font-weight: bold;
-            color: var(--text-dark);
+            color: var(--rs-red); /* Текст конгресса теперь красный */
             text-align: center;
             text-transform: uppercase;
             line-height: 1.4;
@@ -289,7 +288,6 @@
         const SPREADSHEET_ID = "1zKuNfeFfe3SwHuXriJJYnB7mN76cnFyhgcrZpoua05E"; 
         const SHEET_NAME = "График";
         
-        // Запрашиваем с запасом ячейки A1:H40
         const JSON_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${encodeURIComponent(SHEET_NAME)}&range=A1:H40`;
 
         const container = document.getElementById('scheduleContainer');
@@ -301,7 +299,6 @@
             if(!dateStr) return '';
             let cleanStr = dateStr.toString().trim();
             
-            // Если дата пришла в формате ISO (ГГГГ-ММ-ДД)
             if (cleanStr.includes('-')) {
                 const parts = cleanStr.split('-');
                 if (parts.length === 3) {
@@ -313,7 +310,6 @@
                     }
                 }
             }
-            // Если дата в формате ДД.ММ.ГГГГ
             if (cleanStr.includes('.')) {
                 const parts = cleanStr.split('.');
                 if (parts.length === 3) {
@@ -336,7 +332,6 @@
             const json = JSON.parse(rawJson);
             const rows = json.table.rows;
 
-            // Нам обязательно нужна колонка А для понимания структуры (маркеров)
             const parsedData = {
                 "A": [], "B": [], "D": [], "F": [], "H": []
             };
@@ -358,15 +353,13 @@
         function renderSchedule(data) {
             container.innerHTML = '';
             const columns = ["B", "D", "F", "H"];
-            const labels = data["A"]; // Ориентируемся на реальные надписи из колонки А
+            const labels = data["A"]; 
 
-            // Ищем базовые индексы динамически по колонке А
             const typeIdx = labels.findIndex(l => l.toLowerCase().includes("типнедели"));
             const dateIdx = labels.findIndex(l => l.toLowerCase().includes("дата"));
             const dayIdx  = labels.findIndex(l => l.toLowerCase().includes("день"));
             const rsSeparatorIdx = labels.findIndex(l => l.toLowerCase().includes("посещение районного"));
 
-            // Глобальный день недели в шапке страницы
             if (data["B"] && dayIdx !== -1) {
                 document.getElementById('globalDayTime').innerHTML = `(${data["B"][dayIdx]} 16<span class="time-super">00</span>)`;
             }
@@ -375,7 +368,6 @@
                 const arr = data[col];
                 if (!arr || arr.length === 0) return;
 
-                // Извлекаем тип, дату и день по динамическим индексам
                 const type = typeIdx !== -1 ? arr[typeIdx] : "Обычная";
                 const dateRaw = dateIdx !== -1 ? arr[dateIdx] : "";
                 const dayName = dayIdx !== -1 ? arr[dayIdx] : "Воскресенье";
@@ -393,7 +385,6 @@
 
                 if (type === "Конгресс") {
                     card.classList.add('type-congress');
-                    // Текст конгресса ищем на строке, где в колонке А написано "Региональный конгресс" или "Конгресс"
                     const cTextIdx = labels.findIndex((l, i) => i > dayIdx && l.toLowerCase().includes("конгрес"));
                     const congText = cTextIdx !== -1 ? arr[cTextIdx] : "РЕГИОНАЛЬНЫЙ КОНГРЕСС";
                     
@@ -402,8 +393,6 @@
                 } 
                 else if (type === "Визит РС") {
                     card.classList.add('type-rs');
-                    
-                    // Для Визита РС ищем индексы строго ПОСЛЕ разделителя "Посещение районного"
                     const startFind = rsSeparatorIdx !== -1 ? rsSeparatorIdx : 12;
                     
                     const getRSIndex = (labelName) => {
@@ -429,7 +418,6 @@
                     `;
                 } 
                 else {
-                    // Обычная неделя — ищем индексы строго ДО разделителя РС
                     const endFind = rsSeparatorIdx !== -1 ? rsSeparatorIdx : 14;
                     
                     const getNormalIndex = (labelName) => {
@@ -439,7 +427,7 @@
                     bodyBlock.innerHTML = `
                         <div class="item-row"><div class="item-label">Председатель:</div><div class="item-value">${arr[getNormalIndex("Председатель")] || ''}</div></div>
                         <div class="item-row"><div class="item-label">Песня:</div><div class="item-value">${arr[getNormalIndex("Песня№")] || ''}</div></div>
-                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getNormalIndex("Молитва1")] || ''}</div></div>
+                        <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getNormalIndex("IntegratedМолитва")] || arr[getNormalIndex("Молитва1")] || ''}</div></div>
                         
                         <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${arr[getNormalIndex("Докладчик")] || ''}</span></div>
                         <div class="speech-topic">«${arr[getNormalIndex("НазваниеРечи")] || ''}»</div>
