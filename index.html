@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Публичная встреча и Изучение Сторожевой башни</title>
     <style>
         :root {
@@ -14,6 +14,8 @@
             --rs-red: #d32f2f;   
             --pastel-blue: #e6f2fa; 
             --pastel-red: #fdf2f2;  
+            /* Базовый масштаб для ПК (100%) */
+            --desktop-scale: 1;
         }
 
         * {
@@ -77,23 +79,24 @@
             color: #fff;
         }
 
-        /* КОНТЕЙНЕР ДЛЯ МОБИЛЬНОГО МАСШТАБИРОВАНИЯ (как в графике РС) */
+        /* Обертка для мобильного скролла при зуме */
         .mobile-scale-container {
             width: 100%;
             overflow-x: auto;
-            overflow-y: hidden;
-            transform-origin: top left;
+            -webkit-overflow-scrolling: touch;
         }
 
+        /* ГРАФИК: Перевели все размеры шрифтов и отступов на динамические единицы em */
         .page-wrapper {
             max-width: 820px; 
-            width: 820px; /* Фиксируем ширину А4, чтобы верстка никогда не ломалась */
+            width: 820px; 
             min-width: 820px;
             margin: 0 auto;
             background: #fff;
-            padding: 30px 40px;
+            padding: 2.1em 2.8em;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             display: none; 
+            font-size: calc(1em * var(--desktop-scale)); /* Управляется через JS на мобильных */
         }
 
         body.view-mode-4x1 .page-wrapper {
@@ -104,30 +107,30 @@
 
         .main-header {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 1.7em;
         }
 
         .global-day-time {
-            font-size: 22pt;
+            font-size: 1.8em;
             font-weight: normal;
             color: var(--text-dark);
-            margin-bottom: 5px;
+            margin-bottom: 0.3em;
         }
 
         .global-day-time .time-super {
-            font-size: 14pt;
+            font-size: 0.65em;
             vertical-align: super;
         }
 
         .global-title {
-            font-size: 18pt;
+            font-size: 1.5em;
             font-weight: bold;
             color: var(--main-blue);
         }
 
         .schedule-container {
             display: grid;
-            gap: 20px;
+            gap: 1.4em;
         }
 
         .view-2x2 {
@@ -140,7 +143,7 @@
 
         .week-card {
             background: var(--card-bg);
-            border: 2px solid var(--main-blue);
+            border: 0.15em solid var(--main-blue);
             display: flex;
             flex-direction: column;
             padding: 0;
@@ -150,15 +153,15 @@
         .week-header-block {
             text-align: center;
             background-color: var(--pastel-blue);
-            border-bottom: 1px solid var(--main-blue);
-            padding: 10px;
-            font-size: 12pt;
+            border-bottom: 0.08em solid var(--main-blue);
+            padding: 0.7em;
+            font-size: 1em;
             font-weight: bold;
             color: #000;
         }
 
         .card-body {
-            padding: 12px 16px;
+            padding: 0.8em 1.1em;
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -168,8 +171,8 @@
             display: flex;
             justify-content: space-between; 
             align-items: baseline;
-            margin-bottom: 6px;
-            font-size: 11pt;
+            margin-bottom: 0.4em;
+            font-size: 0.9em;
             line-height: 1.3;
         }
 
@@ -177,7 +180,7 @@
             font-style: italic;
             color: var(--text-dark);
             text-align: left;
-            padding-right: 10px;
+            padding-right: 0.7em;
             white-space: nowrap;
         }
 
@@ -191,8 +194,8 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            margin: 4px 0;
-            font-size: 11pt;
+            margin: 0.3em 0;
+            font-size: 0.9em;
         }
         .speech-row .label-bold {
             font-weight: bold;
@@ -208,38 +211,38 @@
             text-align: center;
             font-weight: bold;
             color: var(--text-blue);
-            font-size: 11pt;
-            margin: 10px 0;
-            padding: 0 5px;
+            font-size: 0.9em;
+            margin: 0.7em 0;
+            padding: 0 0.3em;
             text-transform: uppercase;
             line-height: 1.3;
         }
 
         .sb-heading {
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 0.9em;
             color: var(--text-dark);
             text-align: left;
-            margin: 8px 0 6px 0;
-            border-top: 1px solid var(--main-blue);
-            padding-top: 6px;
+            margin: 0.6em 0 0.4em 0;
+            border-top: 0.08em solid var(--main-blue);
+            padding-top: 0.4em;
         }
 
         .week-card.type-rs,
         .week-card.type-congress {
-            border: 2px solid var(--rs-red);
+            border: 0.15em solid var(--rs-red);
         }
         .week-card.type-rs .week-header-block,
         .week-card.type-congress .week-header-block {
             background-color: var(--pastel-red);
-            border-bottom: 1px solid var(--rs-red);
+            border-bottom: 0.08em solid var(--rs-red);
         }
 
         .week-card.type-rs .speech-topic {
             color: var(--rs-red);
         }
         .week-card.type-rs .sb-heading {
-            border-top: 1px solid var(--rs-red);
+            border-top: 0.08em solid var(--rs-red);
         }
 
         .week-card.type-congress .congress-content-wrapper {
@@ -247,11 +250,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            min-height: 250px;
+            padding: 1.4em;
+            min-height: 18em;
         }
         .week-card.type-congress .congress-text {
-            font-size: 13pt;
+            font-size: 1.1em;
             font-weight: bold;
             color: var(--rs-red); 
             text-align: center;
@@ -259,18 +262,20 @@
             line-height: 1.4;
         }
 
-        /* На мобильных экранах убираем внешние отступы body */
         @media screen and (max-width: 840px) {
             body {
                 padding: 5px;
+            }
+            .page-wrapper {
+                margin: 0; /* Убираем центрирование, чтобы при зуме было удобно листать */
             }
         }
 
         @media print {
             body { background: #fff; padding: 0; }
             .controls { display: none !important; }
-            .mobile-scale-container { transform: none !important; width: 100% !important; overflow: visible !important; }
-            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; width: 100% !important; }
+            .mobile-scale-container { overflow: visible !important; }
+            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; width: 100% !important; font-size: 12pt !important; }
             .week-card { page-break-inside: avoid; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body.print-2x2 { @page { size: portrait; margin: 10mm; } }
@@ -291,7 +296,7 @@
         </div>
     </div>
 
-    <div class="mobile-scale-container" id="scaleContainerBlock">
+    <div class="mobile-scale-container">
         <div class="page-wrapper" id="pageWrapperBlock">
             <div class="main-header">
                 <div class="global-day-time" id="globalDayTime"></div>
@@ -312,45 +317,35 @@
         const printBtn = document.getElementById('printBtn');
         const bodyElement = document.getElementById('bodyElement');
         const pageWrapper = document.getElementById('pageWrapperBlock');
-        const scaleContainer = document.getElementById('scaleContainerBlock');
 
-        // НАДЕЖНАЯ ФУНКЦИЯ МАСШТАБИРОВАНИЯ ЧЕРЕЗ CSS TRANSFORMS (как в графике РС)
+        // ЧИСТОЕ И НАДЕЖНОЕ МАСШТАБИРОВАНИЕ ЧЕРЕЗ ШРИФТЫ (БЕЗ БЕЛЫХ ПУСТОТ)
         function adjustMobileZoom() {
             if (window.innerWidth <= 840) {
                 const targetWidth = container.classList.contains('view-4x1') ? 1300 : 820;
-                const availableWidth = window.innerWidth - 10; // 10px на боковые отступы
+                const availableWidth = window.innerWidth - 10; 
                 const scaleFactor = availableWidth / targetWidth;
                 
-                // Принудительно вписываем блок в ширину экрана смартфона
-                scaleContainer.style.transform = `scale(${scaleFactor})`;
-                scaleContainer.style.width = `${targetWidth}px`;
-                // Компенсируем высоту, которую забирает scale
-                scaleContainer.style.height = `${pageWrapper.offsetHeight * scaleFactor}px`;
+                // Передаем коэффициент в CSS-переменную, высота подстроится сама!
+                document.documentElement.style.setProperty('--desktop-scale', scaleFactor);
             } else {
-                scaleContainer.style.transform = 'none';
-                scaleContainer.style.width = '100%';
-                scaleContainer.style.height = 'auto';
+                document.documentElement.style.setProperty('--desktop-scale', '1');
             }
         }
 
-        // ФУНКЦИЯ ФОРМАТИРОВАНИЯ ВРЕМЕНИ В ШАПКЕ
         function setFormattedTime(dayName) {
             // ==========================================
             // ПРИМЕЧАНИЕ ДЛЯ РЕДАКТИРОВАНИЯ ВРЕМЕНИ:
-            // Если нужно жестко поменять время в коде, замени строку ниже на свою, например:
-            // let defaultTime = "17:15";
+            // Если нужно поменять время проведения встречи в коде, измени строку ниже:
             // ==========================================
             let defaultTime = "16:00"; 
             
             let cleanDay = dayName.trim();
-            // Делаем первую букву заглавной, остальные маленькими (например, "Воскресенье")
             if(cleanDay) {
                 cleanDay = cleanDay.charAt(0).toUpperCase() + cleanDay.slice(1).toLowerCase();
             } else {
                 cleanDay = "Воскресенье";
             }
 
-            // Разбиваем время на часы и минуты для красивого отображения верхнего индекса <sup>
             let timeParts = defaultTime.split(":");
             let hours = timeParts[0] || "16";
             let minutes = timeParts[1] || "00";
@@ -424,7 +419,6 @@
             const rsSeparatorIdx = labels.findIndex(l => l.toLowerCase().includes("посещение районного"));
 
             if (data["B"] && dayIdx !== -1) {
-                // Передаем день недели из таблицы в функцию формирования времени
                 setFormattedTime(data["B"][dayIdx]);
             } else {
                 setFormattedTime("Воскресенье");
@@ -473,10 +467,10 @@
                         <div class="speech-row"><span class="label-bold">Речь:</span><span class="value-bold">${arr[getRSIndex("Докладчик1")] || arr[getRSIndex("Докладчик")] || ''}</span></div>
                         <div class="speech-topic">«${arr[getRSIndex("НазваниеРечи1")] || arr[getRSIndex("НазваниеРечи")] || ''}»</div>
                         
-                        <div class="sb-heading">Сторожевая Башня</div>
+                        <div class="sb-heading">Сторожевая Башень</div>
                         <div class="item-row"><div class="item-label">Ведущий:</div><div class="item-value">${arr[getRSIndex("ВедущийСТ")] || ''}</div></div>
                         
-                        <div class="speech-row" style="margin-top: 8px;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${arr[getRSIndex("Докладчик2")] || ''}</span></div>
+                        <div class="speech-row" style="margin-top: 0.5em;"><span class="label-bold">Закл. речь:</span><span class="value-bold">${arr[getRSIndex("Докладчик2")] || ''}</span></div>
                         <div class="speech-topic">«${arr[getRSIndex("НазваниеРечи2")] || ''}»</div>
                         
                         <div class="item-row"><div class="item-label">Молитва:</div><div class="item-value">${arr[getRSIndex("Молитва2")] || arr[labels.findIndex((l, i) => i > getRSIndex("НазваниеРечи2") && l.toLowerCase().includes("молитва"))] || ''}</div></div>
@@ -509,9 +503,8 @@
                 container.appendChild(card);
             });
 
-            // Корректируем масштаб сразу же и повторно после полной отрисовки
+            // Корректируем масштаб без задержек — теперь это работает стабильно
             adjustMobileZoom();
-            window.requestAnimationFrame(adjustMobileZoom);
         }
 
         fetch(JSON_URL)
@@ -548,10 +541,9 @@
             adjustMobileZoom();
         });
 
-        // Отслеживаем поворот экрана и изменение размеров окна
         window.addEventListener('resize', adjustMobileZoom);
         window.addEventListener('orientationchange', () => {
-            setTimeout(adjustMobileZoom, 200);
+            setTimeout(adjustMobileZoom, 150);
         });
 
         printBtn.addEventListener('click', () => {
