@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>Публичная встреча и Изучение Сторожевой башни</title>
     <style>
         :root {
@@ -77,19 +77,29 @@
             color: #fff;
         }
 
+        /* КОНТЕЙНЕР ДЛЯ МОБИЛЬНОГО МАСШТАБИРОВАНИЯ (как в графике РС) */
+        .mobile-scale-container {
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            transform-origin: top left;
+        }
+
         .page-wrapper {
             max-width: 820px; 
-            width: 100%;
+            width: 820px; /* Фиксируем ширину А4, чтобы верстка никогда не ломалась */
+            min-width: 820px;
             margin: 0 auto;
             background: #fff;
             padding: 30px 40px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             display: none; 
-            transform-origin: top left;
         }
 
         body.view-mode-4x1 .page-wrapper {
             max-width: 1300px;
+            width: 1300px;
+            min-width: 1300px;
         }
 
         .main-header {
@@ -97,22 +107,11 @@
             margin-bottom: 25px;
         }
 
-        /* Стили для интерактивного изменения времени */
         .global-day-time {
             font-size: 22pt;
             font-weight: normal;
             color: var(--text-dark);
             margin-bottom: 5px;
-            display: inline-block;
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        
-        .global-day-time:hover {
-            background-color: #e6f2fa;
-            color: var(--main-blue);
         }
 
         .global-day-time .time-super {
@@ -260,30 +259,18 @@
             line-height: 1.4;
         }
 
+        /* На мобильных экранах убираем внешние отступы body */
         @media screen and (max-width: 840px) {
             body {
-                padding: 10px;
-                overflow-x: auto; 
-            }
-            .controls {
-                max-width: 100% !important;
-                min-width: 0 !important;
-            }
-            .page-wrapper {
-                width: 820px !important; 
-                min-width: 820px !important;
-                padding: 20px;
-            }
-            body.view-mode-4x1 .page-wrapper {
-                width: 1300px !important;
-                min-width: 1300px !important;
+                padding: 5px;
             }
         }
 
         @media print {
             body { background: #fff; padding: 0; }
             .controls { display: none !important; }
-            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; transform: none !important; zoom: normal !important; }
+            .mobile-scale-container { transform: none !important; width: 100% !important; overflow: visible !important; }
+            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; width: 100% !important; }
             .week-card { page-break-inside: avoid; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body.print-2x2 { @page { size: portrait; margin: 10mm; } }
@@ -304,13 +291,14 @@
         </div>
     </div>
 
-    <div class="page-wrapper" id="pageWrapperBlock">
-        <div class="main-header">
-            <!-- Добавлен title-подсказка для удобства -->
-            <div class="global-day-time" id="globalDayTime" title="Нажмите, чтобы изменить время"></div>
-            <div class="global-title">Публичная встреча и Изучение Сторожевой башни</div>
+    <div class="mobile-scale-container" id="scaleContainerBlock">
+        <div class="page-wrapper" id="pageWrapperBlock">
+            <div class="main-header">
+                <div class="global-day-time" id="globalDayTime"></div>
+                <div class="global-title">Публичная встреча и Изучение Сторожевой башни</div>
+            </div>
+            <div class="schedule-container view-2x2" id="scheduleContainer"></div>
         </div>
-        <div class="schedule-container view-2x2" id="scheduleContainer"></div>
     </div>
 
     <script>
@@ -324,46 +312,51 @@
         const printBtn = document.getElementById('printBtn');
         const bodyElement = document.getElementById('bodyElement');
         const pageWrapper = document.getElementById('pageWrapperBlock');
-        const timeHeader = document.getElementById('globalDayTime');
+        const scaleContainer = document.getElementById('scaleContainerBlock');
 
-        // Функция автоматического масштабирования
+        // НАДЕЖНАЯ ФУНКЦИЯ МАСШТАБИРОВАНИЯ ЧЕРЕЗ CSS TRANSFORMS (как в графике РС)
         function adjustMobileZoom() {
             if (window.innerWidth <= 840) {
                 const targetWidth = container.classList.contains('view-4x1') ? 1300 : 820;
-                const padding = 20; 
-                const availableWidth = window.innerWidth - padding;
-                const zoomFactor = availableWidth / targetWidth;
+                const availableWidth = window.innerWidth - 10; // 10px на боковые отступы
+                const scaleFactor = availableWidth / targetWidth;
                 
-                pageWrapper.style.zoom = zoomFactor;
+                // Принудительно вписываем блок в ширину экрана смартфона
+                scaleContainer.style.transform = `scale(${scaleFactor})`;
+                scaleContainer.style.width = `${targetWidth}px`;
+                // Компенсируем высоту, которую забирает scale
+                scaleContainer.style.height = `${pageWrapper.offsetHeight * scaleFactor}px`;
             } else {
-                pageWrapper.style.zoom = 'normal';
+                scaleContainer.style.transform = 'none';
+                scaleContainer.style.width = '100%';
+                scaleContainer.style.height = 'auto';
             }
         }
 
-        // Функция парсинга времени для правильного отображения минут в теге <sup>
-        function setFormattedTime(rawText) {
-            let clean = rawText.trim();
-            // Ищем цифры минут в конце (например, 00, 30, 15)
-            let match = clean.match(/(\d{2})$/);
-            if (match) {
-                let minutes = match[1];
-                let baseText = clean.substring(0, clean.length - 2);
-                timeHeader.innerHTML = `${baseText}<span class="time-super">${minutes}</span>`;
-            } else {
-                timeHeader.textContent = clean;
-            }
-        }
-
-        // Обработчик клика по времени для ручного изменения
-        timeHeader.addEventListener('click', () => {
-            // Извлекаем чистый текст без HTML тегов
-            let currentText = timeHeader.textContent;
-            let newText = prompt("Введите день и время проведения (например: Воскресенье 1600 или Суббота 1715):", currentText);
+        // ФУНКЦИЯ ФОРМАТИРОВАНИЯ ВРЕМЕНИ В ШАПКЕ
+        function setFormattedTime(dayName) {
+            // ==========================================
+            // ПРИМЕЧАНИЕ ДЛЯ РЕДАКТИРОВАНИЯ ВРЕМЕНИ:
+            // Если нужно жестко поменять время в коде, замени строку ниже на свою, например:
+            // let defaultTime = "17:15";
+            // ==========================================
+            let defaultTime = "16:00"; 
             
-            if (newText !== null && newText.trim() !== "") {
-                setFormattedTime(newText);
+            let cleanDay = dayName.trim();
+            // Делаем первую букву заглавной, остальные маленькими (например, "Воскресенье")
+            if(cleanDay) {
+                cleanDay = cleanDay.charAt(0).toUpperCase() + cleanDay.slice(1).toLowerCase();
+            } else {
+                cleanDay = "Воскресенье";
             }
-        });
+
+            // Разбиваем время на часы и минуты для красивого отображения верхнего индекса <sup>
+            let timeParts = defaultTime.split(":");
+            let hours = timeParts[0] || "16";
+            let minutes = timeParts[1] || "00";
+
+            document.getElementById('globalDayTime').innerHTML = `(${cleanDay} ${hours}<span class="time-super">${minutes}</span>)`;
+        }
 
         function formatCardDate(dateStr, dayStr) {
             if(!dateStr) return '';
@@ -431,8 +424,10 @@
             const rsSeparatorIdx = labels.findIndex(l => l.toLowerCase().includes("посещение районного"));
 
             if (data["B"] && dayIdx !== -1) {
-                // Заполняем время из таблицы по умолчанию при первой загрузке
-                setFormattedTime(`(${data["B"][dayIdx]} 1600)`);
+                // Передаем день недели из таблицы в функцию формирования времени
+                setFormattedTime(data["B"][dayIdx]);
+            } else {
+                setFormattedTime("Воскресенье");
             }
 
             columns.forEach(col => {
@@ -514,11 +509,9 @@
                 container.appendChild(card);
             });
 
-            // ИСПРАВЛЕНИЕ: Вызываем масштаб сразу после наполнения контентом,
-            // а также делаем микрозадержку для 100% гарантии срабатывания в мобильных браузерах
+            // Корректируем масштаб сразу же и повторно после полной отрисовки
             adjustMobileZoom();
-            setTimeout(adjustMobileZoom, 150);
-            setTimeout(adjustMobileZoom, 400); 
+            window.requestAnimationFrame(adjustMobileZoom);
         }
 
         fetch(JSON_URL)
@@ -553,10 +546,13 @@
                 toggleBtn.textContent = '📱 Вид: Ряд 4х1';
             }
             adjustMobileZoom();
-            setTimeout(adjustMobileZoom, 100);
         });
 
+        // Отслеживаем поворот экрана и изменение размеров окна
         window.addEventListener('resize', adjustMobileZoom);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(adjustMobileZoom, 200);
+        });
 
         printBtn.addEventListener('click', () => {
             window.print();
