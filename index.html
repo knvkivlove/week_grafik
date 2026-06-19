@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Публичная встреча и Изучение Сторожевой башни</title>
     <style>
         :root {
@@ -39,7 +39,6 @@
 
         .controls {
             max-width: 820px;
-            min-width: 820px; /* Зафиксировали ширину панели управления */
             margin: 0 auto 20px auto;
             display: none; 
             justify-content: flex-end;
@@ -51,7 +50,6 @@
 
         body.view-mode-4x1 .controls {
             max-width: 1300px;
-            min-width: 1300px;
         }
 
         .btn-group {
@@ -79,19 +77,20 @@
             color: #fff;
         }
 
+        /* Обертка страницы: на ПК имеет фиксированную ширину А4 */
         .page-wrapper {
             max-width: 820px; 
-            min-width: 820px; /* Изменено здесь: жестко держим ширину А4, чтобы верстка не "скукоживалась" */
+            width: 100%;
             margin: 0 auto;
             background: #fff;
             padding: 30px 40px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             display: none; 
+            transform-origin: top left;
         }
 
         body.view-mode-4x1 .page-wrapper {
             max-width: 1300px;
-            min-width: 1300px; /* Для горизонтального режима тоже держим ширину */
         }
 
         .main-header {
@@ -254,10 +253,32 @@
             line-height: 1.4;
         }
 
+        /* МОБИЛЬНЫЕ СТИЛИ ДЛЯ АВТО-МАСШТАБИРОВАНИЯ И ЗУМА */
+        @media screen and (max-width: 840px) {
+            body {
+                padding: 10px;
+                overflow-x: auto; /* Разрешаем горизонтальную прокрутку при приближении */
+            }
+            .controls {
+                max-width: 100% !important;
+                min-width: 0 !important;
+            }
+            .page-wrapper {
+                /* Жестко задаем ширину А4, но через JS мы сожмем её под экран */
+                width: 820px !important; 
+                min-width: 820px !important;
+                padding: 20px;
+            }
+            body.view-mode-4x1 .page-wrapper {
+                width: 1300px !important;
+                min-width: 1300px !important;
+            }
+        }
+
         @media print {
             body { background: #fff; padding: 0; }
             .controls { display: none !important; }
-            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; }
+            .page-wrapper { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; min-width: 100% !important; transform: none !important; zoom: normal !important; }
             .week-card { page-break-inside: avoid; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body.print-2x2 { @page { size: portrait; margin: 10mm; } }
@@ -296,6 +317,22 @@
         const toggleBtn = document.getElementById('toggleGridBtn');
         const printBtn = document.getElementById('printBtn');
         const bodyElement = document.getElementById('bodyElement');
+        const pageWrapper = document.getElementById('pageWrapperBlock');
+
+        // Функция автоматического масштабирования под ширину экрана телефона
+        function adjustMobileZoom() {
+            if (window.innerWidth <= 840) {
+                const targetWidth = container.classList.contains('view-4x1') ? 1300 : 820;
+                const padding = 20; // отступы боди
+                const availableWidth = window.innerWidth - padding;
+                const zoomFactor = availableWidth / targetWidth;
+                
+                // Применяем zoom к обертке, чтобы она идеально вписалась в экран
+                pageWrapper.style.zoom = zoomFactor;
+            } else {
+                pageWrapper.style.zoom = 'normal';
+            }
+        }
 
         function formatCardDate(dateStr, dayStr) {
             if(!dateStr) return '';
@@ -444,6 +481,9 @@
                 card.appendChild(bodyBlock);
                 container.appendChild(card);
             });
+
+            // Масштабируем после рендеринга карточек
+            adjustMobileZoom();
         }
 
         fetch(JSON_URL)
@@ -477,7 +517,12 @@
                 bodyElement.classList.remove('view-mode-4x1');
                 toggleBtn.textContent = '📱 Вид: Ряд 4х1';
             }
+            // Пересчитываем коэффициент сжатия при переключении режима отображения
+            adjustMobileZoom();
         });
+
+        // Пересчитываем масштаб, если пользователь перевернул экран телефона
+        window.addEventListener('resize', adjustMobileZoom);
 
         printBtn.addEventListener('click', () => {
             window.print();
